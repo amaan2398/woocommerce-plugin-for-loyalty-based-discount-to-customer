@@ -2,19 +2,64 @@
 /*
 Plugin Name: Loyalty Discount
 Description: This is an plugin which will give discount to customer based on customer loyalty score by the use of ML/AI supervise model.
-Version:0.11
+Version:0.1
 Author: Amaan Shaikh
 Author URI:www.linkedin.com/in/amaan-shaikh-a91735178
 */
+define("PLUGIN_DIR_PATH",plugin_dir_path(__FILE__));
+define("PLUGIN_URL",plugins_url());
+define("PLUGIN_VERSION","0.1");
 
 function add_my_custom_menu(){
-	add_menu_page("loyaltydiscount","Loyalty Discount","manage_options","loyalty-discount","plugin_home_view","dashicons-dashboard",6);
+	add_menu_page("loyaltydiscount","Loyalty Discount","manage_options","loyalty-discount","plugin_dashboard_view","dashicons-dashboard",6);
+	add_submenu_page("loyalty-discount","dashboard","Dashboard","manage_options","loyalty-discount","plugin_dashboard_view");
+	add_submenu_page("loyalty-discount","settings","Settings","manage_options","settings","plugin_settings_view");
 }
 add_action("admin_menu","add_my_custom_menu");
 
-function plugin_home_view(){
-
+function plugin_dashboard_view(){
+	include_once(PLUGIN_DIR_PATH."/views/dashboard.php");
 }
+
+function plugin_settings_view(){
+	include_once(PLUGIN_DIR_PATH."/views/settings.php");
+}
+
+add_action("init","plugin_assets");
+
+function plugin_assets(){
+	wp_enqueue_style("style_css",PLUGIN_URL."/loyalty-discount/assets/css/style.css","",PLUGIN_VERSION);
+	wp_enqueue_script("plugin_script",PLUGIN_URL."/loyalty-discount/assets/js/script.js","",PLUGIN_VERSION,true);
+}
+
+function loyaltydiscount_table(){
+	global $wpdb;
+	require_once(ABSPATH."wp-admin/includes/upgrade.php");
+
+	if(count($wpdb->get_var("SHOW TABLE LIKE 'wp_loyaltydiscount'"))==0){
+		$sql_query_to_create_table = "CREATE TABLE `wp_loyaltydiscount` (
+ `id` int(11) NOT NULL,
+ `customer_id` int(11) NOT NULL,
+ `product_id` int(11) NOT NULL,
+ `date_time` int(11) NOT NULL,
+ `price` float NOT NULL,
+ `discount` float NOT NULL,
+ `LD_aquire` text NOT NULL,
+ PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+		dbDelta($sql_query_to_create_table);
+	}
+}
+
+register_activation_hook(__FILE__,"loyaltydiscount_table");
+
+function loyaltydiscount_table_delete(){
+	global $wpdb;
+	$wpdb->query("DROP TABLE IF EXISTS wp_loyaltydiscount");
+}
+
+register_uninstall_hook(__FILE__,"loyaltydiscount_table_delete");
+
 
 function api_call(){
 	$user=wp_get_current_user();
