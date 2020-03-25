@@ -6,6 +6,22 @@ Version:0.1
 Author: Amaan Shaikh
 Author URI:www.linkedin.com/in/amaan-shaikh-a91735178
 */
+
+if (!defined('ABSPATH')) {
+    exit;
+}
+
+function ld_posts(){
+	return "AMAAN";
+}
+
+add_action('rest_api_init', function(){
+	register_rest_route('ld/v1','/posts',[
+		'methods' => 'GET',
+		'callback' => 'ld_posts'
+	]);
+});
+
 define("PLUGIN_DIR_PATH",plugin_dir_path(__FILE__));
 define("PLUGIN_URL",plugins_url());
 define("PLUGIN_VERSION","0.1");
