@@ -1,7 +1,6 @@
 <?php
 
-$prodDiscount = array();
-$t=0;
+
 function api_call($cust_id,$pid){
   $arrjs=array("id"=>$cust_id,"product_c"=>$pid);
   $send_json=json_encode($arrjs);
@@ -14,25 +13,15 @@ function api_call($cust_id,$pid){
   curl_close($ch);
   return $result;
 }
-/*
-function prefix_add_discount_line( $cart ) {
 
-  //$discount = api_call();
-  $discount=10;
-  print_r($cart);
-  $cart->add_fee("Loyalty discount", $discount);
-  print_r($cart);
-}*/
-//add_action( 'woocommerce_cart_calculate_fees', 'prefix_add_discount_line',20,1);
 add_action( 'woocommerce_before_calculate_totals', 'add_custom_price', 10, 1);
 function add_custom_price( $cart_object ) {
     $user=wp_get_current_user();
     $cust_id = $user->ID;
-    global $prodDiscount;
     global $woocommerce;
-    global $t;
-    $prodDiscount = array('id' => $cust_id);
-    $t=0;
+    global $ld;
+    $ld->prodDiscount = array('id' => $cust_id);
+    $ld->t=0;
     if ( is_admin() && ! defined( 'DOING_AJAX' ) )
         return;
 
@@ -43,10 +32,31 @@ function add_custom_price( $cart_object ) {
         $pid = $cart_item['data']->get_id();
         $result=api_call($cust_id,$pid);
         $discount=$result['response'];
-        $t+=$discount;
+        $ld->t+=$discount;
         ## Price calculation ##
-        $price = $cart_item['data']->price - ($discount/$cart_item['quantity']);
-        array_push($prodDiscount,array('pid'=>$pid,'price'=>$price*$cart_item['quantity'],'discount'=>$discount,'code'=>$result['code']));
+        //print_r($cart_item['data']->price);
+        global $wpdb;
+        require_once(ABSPATH."wp-admin/includes/upgrade.php");
+        $query="SELECT status FROM wp_ld_tax_status";
+        $database=$wpdb->get_results(
+          $wpdb->prepare(
+                $query,''
+            )
+        );
+        if (((array)$database[0])['status'] == 1){
+          //$ttax=$cart_item['line_tax_data']['total'][1]/$cart_item['data']->price;
+          //print_r($cart_item['line_tax_data']['total'][1]." ");
+          if($ttax>0){
+            $price = $cart_item['data']->price - (($discount/$cart_item['quantity'])/0.2);
+          }
+          else{
+            $price = $cart_item['data']->price - ($discount/$cart_item['quantity']);
+          }
+        }
+        else {
+          $price = $cart_item['data']->price - ($discount/$cart_item['quantity']);
+        }
+        array_push($ld->prodDiscount,array('pid'=>$pid,'price'=>$price*$cart_item['quantity'],'discount'=>$discount,'code'=>$result['code']));
         ## Set the price with WooCommerce compatibility ##
         if ( version_compare( WC_VERSION, '3.0', '<' ) ) {
             $cart_item['data']->price = $price; // Before WC 3.0
@@ -61,8 +71,8 @@ function add_custom_price( $cart_object ) {
 function discount_view() {
 
     global $woocommerce;
-    global $t;
-    $discount_total = $t;
+    global $ld;
+    $discount_total = $ld->t;
 
     if ( $discount_total > 0 ) {
     echo '<tr class="cart-discount">
@@ -82,24 +92,20 @@ add_action( 'woocommerce_review_order_after_order_total', 'discount_view', 99);
 
 add_action('woocommerce_checkout_order_processed','placed_order_update_database', 10, 1);
 function placed_order_update_database($order_id){
-  global $prodDiscount;
-  //print_r($prodDiscount);
   global $wpdb;
-  //print_r(sizeof($prodDiscount)-1);
   require_once(ABSPATH."wp-admin/includes/upgrade.php");
-  //global $count;
-  //$count+=1;
-  //echo $count;
+  global $ld;
   $i=0;
-  for($i=0;$i<sizeof($prodDiscount)-1;$i++){
+  for($i=0;$i<sizeof($ld->prodDiscount)-1;$i++){
       $table = $wpdb->prefix.'loyaltydiscount';
       $data=array(
-            "customer_id" =>$prodDiscount["id"],
-            "product_id" => $prodDiscount[$i]["pid"],
-            "price" =>$prodDiscount[$i]["price"],
-            "lastOfferCode" => $prodDiscount[$i]["code"],
-            "discount" => $prodDiscount[$i]["discount"],
-            "LD_aquire" => ($prodDiscount[$i]["discount"] > 0 ? "Yes" : "No")
+            "customer_id" =>$ld->prodDiscount["id"],
+            "product_id" => $ld->prodDiscount[$i]["pid"],
+            "order_id" => $order_id,
+            "price" =>$ld->prodDiscount[$i]["price"],
+            "lastOfferCode" => $ld->prodDiscount[$i]["code"],
+            "discount" => $ld->prodDiscount[$i]["discount"],
+            "LD_aquire" => ($ld->prodDiscount[$i]["discount"] > 0 ? "Yes" : "No")
           );
       if ($data["LD_aquire"]=="Yes"){
           $upData=array("LD_aquire"=>$data["LD_aquire"]);
