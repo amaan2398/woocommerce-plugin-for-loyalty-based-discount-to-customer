@@ -35,21 +35,21 @@ if(!empty($getParam)){
     global $wpdb;
     require_once(ABSPATH."wp-admin/includes/upgrade.php");
     $result=array();
-    $query="SELECT YEAR(date_time) as year,MONTH(date_time) as month,DAY(date_time) as date,COUNT(lastOfferCode)as L FROM wp_loyaltydiscount WHERE MONTH(CURRENT_DATE)=MONTH(date_time) AND product_id=".$_REQUEST['pld_menu']." AND MOD(lastOfferCode,10) > 0 AND discount>0 GROUP BY DATE(date_time)";
+    $query="SELECT YEAR(date_time) as year,MONTH(date_time) as month,DAY(date_time) as date,COUNT(lastOfferCode)as L FROM wp_loyaltydiscount WHERE MONTH(CURRENT_DATE)>=MONTH(date_time) AND product_id=".$_REQUEST['pld_menu']." AND MOD(lastOfferCode,10) > 0 AND discount>0 GROUP BY DATE(date_time)";
     $data=$wpdb->get_results(
       $wpdb->prepare(
             $query,''
         )
     );
     $result=array_merge($result,$data);
-    $query="SELECT YEAR(date_time) as year,MONTH(date_time) as month,DAY(date_time) as date,COUNT(lastOfferCode)as M FROM wp_loyaltydiscount WHERE MONTH(CURRENT_DATE)=MONTH(date_time) AND product_id=".$_REQUEST['pld_menu']." AND MOD((ROUND(lastOfferCode/10)),10) > 0 AND discount>0 GROUP BY DATE(date_time)";
+    $query="SELECT YEAR(date_time) as year,MONTH(date_time) as month,DAY(date_time) as date,COUNT(lastOfferCode)as M FROM wp_loyaltydiscount WHERE MONTH(CURRENT_DATE)>=MONTH(date_time) AND product_id=".$_REQUEST['pld_menu']." AND MOD((ROUND(lastOfferCode/10)),10) > 0 AND discount>0 GROUP BY DATE(date_time)";
     $data=$wpdb->get_results(
       $wpdb->prepare(
             $query,''
         )
     );
     $result=array_merge($result,$data);
-    $query="SELECT YEAR(date_time) as year,MONTH(date_time) as month,DAY(date_time) as date,COUNT(lastOfferCode)as H FROM wp_loyaltydiscount WHERE MONTH(CURRENT_DATE)=MONTH(date_time) AND product_id=".$_REQUEST['pld_menu']." AND MOD((ROUND(lastOfferCode/100)),10) > 0 AND discount>0 GROUP BY DATE(date_time)";
+    $query="SELECT YEAR(date_time) as year,MONTH(date_time) as month,DAY(date_time) as date,COUNT(lastOfferCode)as H FROM wp_loyaltydiscount WHERE MONTH(CURRENT_DATE)>=MONTH(date_time) AND product_id=".$_REQUEST['pld_menu']." AND MOD((ROUND(lastOfferCode/100)),10) > 0 AND discount>0 GROUP BY DATE(date_time)";
     $data=$wpdb->get_results(
       $wpdb->prepare(
             $query,''
@@ -65,7 +65,7 @@ if(!empty($getParam)){
   if($getParam=='get_dashboad_chart_data'){
     global $wpdb;
     require_once(ABSPATH."wp-admin/includes/upgrade.php");
-    $query="SELECT YEAR(date_time) as year,MONTH(date_time) as month,DAY(date_time) as date,SUM(price) as price,SUM(discount) as discount, COUNT(order_id) as ord FROM wp_loyaltydiscount WHERE MONTH(CURRENT_DATE)=MONTH(date_time) GROUP BY DATE(date_time)";
+    $query="SELECT YEAR(date_time) as year,MONTH(date_time) as month,DAY(date_time) as date,SUM(price) as price,SUM(discount) as discount, COUNT(order_id) as ord FROM wp_loyaltydiscount WHERE MONTH(CURRENT_DATE)>=MONTH(date_time) GROUP BY DATE(date_time)";
     $data=$wpdb->get_results(
       $wpdb->prepare(
             $query,''

@@ -12,6 +12,8 @@
 
    <script>
        $(function() {
+         var chartPL;
+
              var post_data = "action=loyalty-discount-lib_dashboard&param=get_dashboad_data";
              $.post(ajax_url,post_data,function(response){
                  var obj = JSON.parse(response);
@@ -24,114 +26,7 @@
                  $("#cord").html(obj[0]['cord']);
              });
 
-             $.fn.dropdown=function(){
-               var post_data = "&action=loyalty-discount-lib_dashboard&param=get_product_data";
-               $.post(ajax_url,post_data,function(response){
-                   //console.log(response);
-                   var obj = JSON.parse(response);
-                   var i =0;
-                   var str='';
-                   for(i=0;i<obj.length;i++){
-                     str+='<option value="'+obj[i]['pid']+'">'+obj[i]['pid']+'</option>';
-                   }
-                   $('#pld_menu').html(str);
-               });
-             }
 
-             $.fn.dropdown();
-
-             $("#form_pld_chart").validate({
-               submitHandler:function(){
-                 var post_data = $("#form_pld_chart").serialize()+"&action=loyalty-discount-lib_dashboard&param=get_product_form_data";
-                 $.post(ajax_url,post_data,function(response){
-                     var obj = JSON.parse(response);
-                     var i;
-                     var todayDate=new Date().getDate();
-                     var pld_lable=[];
-                     var pld_L=[];
-                     var pld_M=[];
-                     var pld_H=[];
-                     if(obj.length>0){
-                       for(i=1;i<todayDate+1;i++){
-                         pld_L.push(0);
-                         pld_M.push(0);
-                         pld_H.push(0);
-                         pld_lable.push(i+"-"+obj[0]['month']+"-"+obj[0]['year']);
-                       }
-                       for(i=0;i<obj.length;i++){
-                         if(isNaN(obj[i]['L'])){
-                         }
-                         else{
-                           pld_L[parseInt(obj[i]['date'])-1]=parseInt(obj[i]['L']);
-                         }
-                       }
-                       for(i=0;i<obj.length;i++){
-                         if(isNaN(obj[i]['M'])){
-                         }
-                         else{
-                           pld_M[parseInt(obj[i]['date'])-1]=parseInt(obj[i]['M']);
-                         }
-                       }
-                       for(i=0;i<obj.length;i++){
-                         if(isNaN(obj[i]['H'])){
-                         }
-                         else{
-                           pld_H[parseInt(obj[i]['date'])-1]=parseInt(obj[i]['H']);
-                         }
-                       }
-                     }
-                     else{
-                       for(i=1;i<todayDate+1;i++){
-                         pld_L.push(0);
-                         pld_M.push(0);
-                         pld_H.push(0);
-                         pld_lable.push(0);
-                       }
-                     }
-                     var ct = document.getElementById('ld-pld_chart').getContext('2d');
-                     var chart = new Chart(ct, {
-                        // The type of chart we want to create
-                        type: 'line',
-
-                        // The data for our dataset
-                        data: {
-                            labels: pld_lable,
-                            datasets: [{
-                                label: 'Low',
-                                borderColor: '#186dd6',
-                                data:pld_L
-                            },{
-                                label: 'Medium',
-                                borderColor: '#20ddc5',
-                                data:pld_M
-                            },{
-                                label: 'high',
-                                borderColor: '#6d6d6d',
-                                data:pld_H
-                            }]
-                        },
-
-                        // Configuration options go here
-                        options: {
-                            title: {
-                                 display: true,
-                                 text: 'Product Loyalty Discount',
-                                 fontSize: 15
-                             },
-                             legend:{
-                               display:true
-                             },
-                             layout: {
-                                 padding: 0
-                             }
-                        }
-                     });
-
-
-
-                 });
-               }
-             });
          });
    </script>
 
@@ -143,26 +38,28 @@
      $.post(ajax_url,post_data,function(response){
          var obj = JSON.parse(response);
          var i;
-
          var tsales_lable=[];
          var tsales_datat=[];
          var tsales_datan=[];
          var tsales_datad=[];
          var tsales_datao=[];
          var todayDate=new Date().getDate();
-         for(i=1;i<todayDate+1;i++){
+         for(i=1;i<=obj.length;i++){
            tsales_datat.push(0);
            tsales_datan.push(0);
            tsales_datad.push(0);
            tsales_datao.push(0);
-           tsales_lable.push(i+"-"+obj[0]['month']+"-"+obj[0]['year']);
+           tsales_lable.push(obj[i-1]['date']+"-"+obj[i-1]['month']+"-"+obj[i-1]['year']);
          }
          var temp;
+         var km=0;
          for(i=0;i<obj.length;i++){
            temp=(parseInt(obj[i]['price'])+parseInt(obj[i]['discount']));
-           tsales_datat[parseInt(obj[i]['date'])-1]=temp;
+           if(parseInt(obj[i]['date']) == 1 && i>0){
+             km+=i-km;
+           }
+           tsales_datat[parseInt(obj[i]['date'])-1+km]=temp;
          }
-
 
          var ctx = document.getElementById('ld-tsales_chart').getContext('2d');
          var chart = new Chart(ctx, {
@@ -208,8 +105,12 @@
 
 
          var ctx = document.getElementById('ld-nsales_chart').getContext('2d');
+         km=0;
          for(i=0;i<obj.length;i++){
-           tsales_datan[parseInt(obj[i]['date'])-1]=parseInt(obj[i]['price']);
+           if(parseInt(obj[i]['date']) == 1 && i>0){
+             km+=i-km;
+           }
+           tsales_datan[parseInt(obj[i]['date'])-1+km]=parseInt(obj[i]['price']);
          }
          var chart = new Chart(ctx, {
             // The type of chart we want to create
@@ -254,8 +155,12 @@
 
 
          var ctx = document.getElementById('ld-discount_chart').getContext('2d');
+         km=0;
          for(i=0;i<obj.length;i++){
-           tsales_datad[parseInt(obj[i]['date'])-1]=parseInt(obj[i]['discount']);
+           if(parseInt(obj[i]['date']) == 1 && i>0){
+             km+=i-km;
+           }
+           tsales_datad[parseInt(obj[i]['date'])-1+km]=parseInt(obj[i]['discount']);
          }
          var chart = new Chart(ctx, {
             // The type of chart we want to create
@@ -299,8 +204,12 @@
 
 
          var ctx = document.getElementById('ld-order_chart').getContext('2d');
+         km=0;
          for(i=0;i<obj.length;i++){
-           tsales_datao[parseInt(obj[i]['date'])-1]=parseInt(obj[i]['ord']);
+           if(parseInt(obj[i]['date']) == 1 && i>0){
+             km+=i-km;
+           }
+           tsales_datao[parseInt(obj[i]['date'])-1+km]=parseInt(obj[i]['ord']);
          }
          var chart = new Chart(ctx, {
             // The type of chart we want to create
@@ -377,20 +286,6 @@
       </div>
       <div class="list-group-item col-lg-6">
         <canvas id="ld-order_chart"></canvas>
-      </div>
-    </div>
-  </div>
-  <div class="container">
-    <h2>Product Loyalty Discount Chart</h2>
-    <form id="form_pld_chart">
-      <label>Choose a product id:</label>
-      <select id="pld_menu" name="pld_menu">
-      </select>
-        <button type="submit" class="btn btn-default" id="btnSelectProduct">Select</button>
-    </form>
-    <div class="list-group ">
-      <div class="list-group-item col-lg-6">
-        <canvas id="ld-pld_chart"></canvas>
       </div>
     </div>
   </div>

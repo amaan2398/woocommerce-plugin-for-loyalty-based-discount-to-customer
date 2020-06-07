@@ -4,7 +4,7 @@
 function api_call($cust_id,$pid){
   $arrjs=array("id"=>$cust_id,"product_c"=>$pid);
   $send_json=json_encode($arrjs);
-  $url="192.168.1.107:8099/discount_model";
+  $url="127.0.0.1:5000/discount_model";
   $ch= curl_init($url);
   curl_setopt($ch,CURLOPT_POSTFIELDS,$send_json);
   curl_setopt($ch,CURLOPT_HTTPHEADER,array('Content-Type:application/json'));
@@ -15,6 +15,7 @@ function api_call($cust_id,$pid){
 }
 
 add_action( 'woocommerce_before_calculate_totals', 'add_custom_price', 10, 1);
+
 function add_custom_price( $cart_object ) {
     $user=wp_get_current_user();
     $cust_id = $user->ID;
@@ -44,8 +45,6 @@ function add_custom_price( $cart_object ) {
             )
         );
         if (((array)$database[0])['status'] == 1){
-          //$ttax=$cart_item['line_tax_data']['total'][1]/$cart_item['data']->price;
-          //print_r($cart_item['line_tax_data']['total'][1]." ");
           if($ttax>0){
             $price = $cart_item['data']->price - (($discount/$cart_item['quantity'])/0.2);
           }
@@ -56,7 +55,8 @@ function add_custom_price( $cart_object ) {
         else {
           $price = $cart_item['data']->price - ($discount/$cart_item['quantity']);
         }
-        array_push($ld->prodDiscount,array('pid'=>$pid,'price'=>$price*$cart_item['quantity'],'discount'=>$discount,'code'=>$result['code']));
+        array_push($ld->prodDiscount,array('pid'=>$pid,'price'=>$price*$cart_item['quantity']
+                    ,'discount'=>$discount,'code'=>$result['code']));
         ## Set the price with WooCommerce compatibility ##
         if ( version_compare( WC_VERSION, '3.0', '<' ) ) {
             $cart_item['data']->price = $price; // Before WC 3.0
